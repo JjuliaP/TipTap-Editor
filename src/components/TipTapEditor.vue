@@ -120,7 +120,8 @@ const exportText = () => {
     const result: { [key: string]: string } = {};
 
     editor.value.state.doc.content.toJSON().forEach((element) => {
-      element.content.forEach((node: any) => {
+      if(element.content){
+        element.content.forEach((node: any) => {
         if (node.marks) {
           const fontWeightMark = node.marks.find(
             (mark: any) => mark.type === "textStyle" && mark.attrs.fontWeight
@@ -131,10 +132,11 @@ const exportText = () => {
             ).toString();
           }
         } else if (node.text) {
-          console.log(node.text);
           result[node.text.trim()] = fontWeightDefault.toString();
         }
       });
+      }
+      
     });
     download(JSON.stringify(result), "json.txt", "text/plain");
   }
