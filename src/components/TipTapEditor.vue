@@ -53,8 +53,12 @@ onMounted(() => {
     extensions: [TextStyle, StarterKit, FontWeight],
     onSelectionUpdate({ editor }) {
       const { state } = editor;
-      const { from, to } = editor.state.selection;
+      const { from, to, empty } = editor.state.selection;
       const text = state.doc.textBetween(from, to, " ");
+
+      if (empty) {
+        showSlider.value = false;
+      }
 
       if (text) {
         showSlider.value = true;
@@ -115,20 +119,22 @@ const exportText = () => {
   if (editor.value) {
     const result: { [key: string]: string } = {};
 
-    editor.value.state.doc.content.toJSON()[0].content.map((node: any) => {
-       console.log(node)
-      if (node.marks) {
-        const fontWeightMark = node.marks.find(
-          (mark: any) => mark.type === "textStyle" && mark.attrs.fontWeight
-        );
-        if (fontWeightMark) {
-          result[node.text.trim()] = (
-            fontWeightMark.attrs.fontWeight / 10
-          ).toString();
+    editor.value.state.doc.content.toJSON().forEach((element) => {
+      element.content.forEach((node: any) => {
+        if (node.marks) {
+          const fontWeightMark = node.marks.find(
+            (mark: any) => mark.type === "textStyle" && mark.attrs.fontWeight
+          );
+          if (fontWeightMark) {
+            result[node.text.trim()] = (
+              fontWeightMark.attrs.fontWeight / 10
+            ).toString();
+          }
+        } else if (node.text) {
+          console.log(node.text);
+          result[node.text.trim()] = fontWeightDefault.toString();
         }
-      } else {
-        result[node.text.trim()] = fontWeightDefault.toString();
-      }
+      });
     });
     download(JSON.stringify(result), "json.txt", "text/plain");
   }
@@ -162,7 +168,6 @@ $color-font: #fff;
 }
 
 .tiptap p {
-  height: 100%;
   margin: 0;
 }
 
@@ -183,11 +188,12 @@ body {
   border: 1px solid $color-border;
   padding: toRem(10) toRem(10);
   box-sizing: border-box;
+  overflow-y: auto;
 }
 
 .editor__button {
   display: flex;
-  gap: toRem(8) px;
+  gap: 8px;
   margin: toRem(20) auto 0 auto;
   align-items: center;
   padding: toRem(10) toRem(20);
